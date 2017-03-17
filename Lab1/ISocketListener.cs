@@ -18,6 +18,6 @@ namespace Lab1
     interface ISocketListener : IDisposable
     {
         event EventHandler<SocketDataEventArgs> DataReceived;
-        void Start();
+        void Start(string dataEnd);
     }
 }

@@ -40,7 +40,7 @@ namespace Lab1
         }
 
         public event EventHandler<SocketDataEventArgs> DataReceived;
-        public void Start()
+        public void Start(string dataEnd)
         {
             _listener.Bind(_connection.Address);
             _listener.Listen(10);
@@ -57,7 +57,7 @@ namespace Lab1
                     var buffer = new byte[256];
                     var lengthRecData = handler.Receive(buffer);
                     data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
-                    if (data.Contains(Environment.NewLine))
+                    if (data.Contains(dataEnd))
                         break;
                 }
 

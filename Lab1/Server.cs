@@ -11,6 +11,8 @@ namespace Lab1
     {
         #region Fields
 
+        private readonly IMessageConverter _clientMessageToServerMessageConverter;
+        private readonly IClientDataConverter _dataToClientMessageConverter;
         private readonly ISocketListener _listener;
         private readonly IDataConverter _dataConverter;
 
@@ -26,6 +28,10 @@ namespace Lab1
 
             _listener = new SocketListener(connection, _dataConverter);
             _listener.DataReceived += OnDataReceived;
+
+            _clientMessageToServerMessageConverter = MessageConverter.Instance;
+            _dataToClientMessageConverter =
+                ClientDataConverter.GetInstance(_clientMessageToServerMessageConverter.MessageEnd);
         }
 
         #endregion
@@ -36,6 +42,8 @@ namespace Lab1
         {
             var handler = e.Handler;
             // TODO: сформировать данные, которые необходимо отправить клиенту
+            var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
+            var serverMessage = _clientMessageToServerMessageConverter.Convert(clientMessage);
             var dataToClient = "OKAY" + Environment.NewLine;
             var bytes = _dataConverter.GetBytes(dataToClient);
             handler.Send(bytes);
