@@ -9,9 +9,10 @@ namespace Lab1
     {
         #region Constructors
 
-        public ServerMessage(string data)
+        public ServerMessage(string data, ClientCommand clientCommand)
         {
             Data = data;
+            ClientCommand = clientCommand;
         }
 
         #endregion
@@ -19,6 +20,7 @@ namespace Lab1
         #region IMessage Members
 
         public string Data { get; private set; }
+        public ClientCommand ClientCommand { get; private set; }
 
         #endregion
     }

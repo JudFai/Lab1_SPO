@@ -3,6 +3,6 @@
     interface IMessageConverter
     {
         string MessageEnd { get; }
-        ServerMessage Convert(ClientMessage clientMessage);
+        ServerMessage Convert(string data, ClientCommand clientCommand);
     }
 }

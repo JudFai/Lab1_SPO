@@ -12,6 +12,7 @@ namespace Lab1
         #region Fields
 
         private readonly IMessageConverter _clientMessageToServerMessageConverter;
+        private readonly IMessageManager _messageManager;
         private readonly IClientDataConverter _dataToClientMessageConverter;
         private readonly ISocketListener _listener;
         private readonly IDataConverter _dataConverter;
@@ -22,6 +23,7 @@ namespace Lab1
 
         public Server(ISocketConnection connection)
         {
+            ConnectedClients = new List<IClient>();
             Connection = connection;
 
             _dataConverter = new DataConverter(Encoding.ASCII);
@@ -30,6 +32,7 @@ namespace Lab1
             _listener.DataReceived += OnDataReceived;
 
             _clientMessageToServerMessageConverter = MessageConverter.Instance;
+            _messageManager = MessageManager.Instance;
             _dataToClientMessageConverter =
                 ClientDataConverter.GetInstance(_clientMessageToServerMessageConverter.MessageEnd);
         }
@@ -38,31 +41,56 @@ namespace Lab1
 
         #region Private Methods
 
+        private void RemoveClientFromCollection(IClient client)
+        {
+            ConnectedClients.Remove(client);
+            client.Dispose();
+        }
+
+        private IClient AddNotExistClientToCollection(Socket handler)
+        {
+            //handler.SendFile("", null, null, T)
+            IClient client = new Client(handler, _dataConverter);
+            var foundClient = ConnectedClients.FirstOrDefault(p => p.Equals(client));
+            if (foundClient != null)
+                client = foundClient;
+            else
+                client.SentMessage += OnSentMessage;
+
+            ConnectedClients.Add(client);
+            return client;
+        }
+
+        private void OnSentMessage(object sender, EventArgs e)
+        {
+            var client = sender as IClient;
+            if (client != null)
+                RemoveClientFromCollection(client);
+        }
+
         private void OnDataReceived(object sender, SocketDataEventArgs e)
         {
             var handler = e.Handler;
-            // TODO: сформировать данные, которые необходимо отправить клиенту
+            var client = AddNotExistClientToCollection(handler);
             var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
-            var serverMessage = _clientMessageToServerMessageConverter.Convert(clientMessage);
-            var dataToClient = "OKAY" + Environment.NewLine;
-            var bytes = _dataConverter.GetBytes(dataToClient);
-            handler.Send(bytes);
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
+            var serverMessage = _messageManager.Interpret(this, clientMessage);
+            client.SendMessage(serverMessage);
         }
 
         #endregion
 
         #region IServer Members
 
+        public List<IClient> ConnectedClients { get; private set; }
         public ISocketConnection Connection { get; private set; }
 
         public void Start()
         {
             try
             {
-                _listener.Start();
+                _listener.Start(_clientMessageToServerMessageConverter.MessageEnd);
             }
+            // TODO: обработка исключений
             catch (Exception)
             {
                 

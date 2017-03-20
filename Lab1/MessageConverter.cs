@@ -43,9 +43,11 @@ namespace Lab1
 
         public string MessageEnd { get; private set; }
 
-        public ServerMessage Convert(ClientMessage clientMessage)
+        public ServerMessage Convert(string data, ClientCommand clientCommand)
         {
-            throw new NotImplementedException();
+            data += MessageEnd;
+
+            return new ServerMessage(data, clientCommand);
         }
 
         #endregion

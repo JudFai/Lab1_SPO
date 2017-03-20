@@ -1,6 +1,6 @@
 ﻿namespace Lab1
 {
-    interface IMessage
+    public interface IMessage
     {
         string Data { get; }
         ClientCommand ClientCommand { get; } 

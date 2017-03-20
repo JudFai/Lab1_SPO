@@ -9,10 +9,13 @@ namespace Lab1
     class ClientDataConverter : IClientDataConverter
     {
         #region Fields
+
         private readonly static object _instanceLocker = new object();
         private readonly Dictionary<ClientCommand, string> _commandPatternDictionary;
 
         private static IClientDataConverter _instance;
+
+        private readonly List<string> _groupParamsCollection;
 
         #endregion
 
@@ -20,10 +23,15 @@ namespace Lab1
 
         private ClientDataConverter(string messageEnd)
         {
+            _groupParamsCollection = new List<string>
+            {
+                "param1"
+            };
             _commandPatternDictionary = new Dictionary<ClientCommand, string>
             {
                 { ClientCommand.Time, string.Format(@"^TIME{0}$", messageEnd) },
                 { ClientCommand.Close, string.Format(@"CLOSE{0}$", messageEnd) },
+                { ClientCommand.Echo, string.Format(@"ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) }
             };
         }
 
@@ -50,7 +58,16 @@ namespace Lab1
             {
                 var match = Regex.Match(data, kvp.Value, RegexOptions.IgnoreCase);
                 if (match.Success)
-                    return new ClientMessage(data, kvp.Key);
+                {
+                    var paramCollection = new List<string>();
+                    _groupParamsCollection.ForEach(p =>
+                    {
+                        if (match.Groups[p].Success)
+                            paramCollection.Add(match.Groups[p].Value);
+                    });
+                    // TODO: временно используем List<string>, вдруг может понадобится формирование более сложных параметров
+                    return new ClientMessage(data, kvp.Key, paramCollection.Cast<object>().ToList());
+                }
             }
 
             return new ClientMessage(data, ClientCommand.Error);

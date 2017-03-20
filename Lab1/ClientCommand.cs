@@ -1,6 +1,6 @@
 ﻿namespace Lab1
 {
-    enum ClientCommand 
+    public enum ClientCommand 
     {
         Error = 0,
         Echo = 1,
