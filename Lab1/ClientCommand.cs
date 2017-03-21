@@ -5,6 +5,7 @@
         Error = 0,
         Echo = 1,
         Time = 2,
-        Close = 3
+        Close = 3,
+        Upload = 4
     }
 }

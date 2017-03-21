@@ -17,7 +17,10 @@ namespace Lab1
 
     interface ISocketListener : IDisposable
     {
+        bool ReceivingFileMode { get; }
         event EventHandler<SocketDataEventArgs> DataReceived;
         void Start(string dataEnd);
+        void ChangeModeToReceivingFile(string extension);
+        void ChangeModeToReceivingData();
     }
 }

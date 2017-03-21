@@ -14,6 +14,7 @@ namespace Lab1
         private readonly ISocketConnection _connection;
         private readonly IDataConverter _dataConverter;
         private bool _listeningWasStopped;
+        private string _fileExtension;
 
         #endregion
 
@@ -31,6 +32,56 @@ namespace Lab1
 
         #endregion
 
+        #region Private Methods
+
+        private void ReceivingData(Socket handler, string dataEnd)
+        {
+            var data = string.Empty;
+            var timeout = DateTime.Now.AddSeconds(10);
+            var wasTimeout = false;
+            while (true)
+            {
+                if (timeout < DateTime.Now)
+                {
+                    wasTimeout = true;
+                    break;
+                }
+
+                var buffer = new byte[256];
+                var lengthRecData = handler.Receive(buffer);
+                data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
+                if (data.Contains(dataEnd))
+                    break;
+            }
+
+            // Если был таймаут, то уничтожаем ресурсы полученного сокета и продолжаем сканирование
+            if (wasTimeout)
+            {
+                handler.Shutdown(SocketShutdown.Both);
+                handler.Close();
+                return;
+            }
+
+            Console.WriteLine("RECEIVED DATA FROM <{0}>: {1}", handler.RemoteEndPoint, data.Replace(Environment.NewLine, string.Empty));
+
+            OnDataReceived(new SocketDataEventArgs(handler, data));
+        }
+
+        private void ReceivingFile(Socket handler)
+        {
+            while (true)
+            {
+                // 1 Gbyte
+                var buffer = new byte[1048576];
+                var lengthRecData = handler.Receive(buffer);
+                //data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
+                //if (data.Contains(dataEnd))
+                //    break;
+            }
+        }
+
+        #endregion
+
         #region ISocketListener Members
 
         private void OnDataReceived(SocketDataEventArgs e)
@@ -39,6 +90,7 @@ namespace Lab1
                 DataReceived(this, e);
         }
 
+        public bool ReceivingFileMode { get; private set; }
         public event EventHandler<SocketDataEventArgs> DataReceived;
         public void Start(string dataEnd)
         {
@@ -51,36 +103,22 @@ namespace Lab1
                     return;
 
                 var handler = _listener.Accept();
-                var data = string.Empty;
-                var timeout = DateTime.Now.AddSeconds(10);
-                var wasTimeout = false;
-                while (true)
-                {
-                    if (timeout < DateTime.Now)
-                    {
-                        wasTimeout = true;
-                        break;
-                    }
-
-                    var buffer = new byte[256];
-                    var lengthRecData = handler.Receive(buffer);
-                    data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
-                    if (data.Contains(dataEnd))
-                        break;
-                }
-
-                // Если был таймаут, то уничтожаем ресурсы полученного сокета и продолжаем сканирование
-                if (wasTimeout)
-                {
-                    handler.Shutdown(SocketShutdown.Both);
-                    handler.Close();
-                    continue;
-                }
-
-                Console.WriteLine("RECEIVED DATA FROM <{0}>: {1}", handler.RemoteEndPoint, data.Replace(Environment.NewLine, string.Empty));
-
-                OnDataReceived(new SocketDataEventArgs(handler, data));
+                if (ReceivingFileMode)
+                    ReceivingFile(handler);
+                else
+                    ReceivingData(handler, dataEnd);
             }
+        }
+
+        public void ChangeModeToReceivingFile(string extension)
+        {
+            ReceivingFileMode = true;
+            _fileExtension = extension;
+        }
+
+        public void ChangeModeToReceivingData()
+        {
+            ReceivingFileMode = false;
         }
 
         #endregion

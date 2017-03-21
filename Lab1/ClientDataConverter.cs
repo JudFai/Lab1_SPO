@@ -31,7 +31,8 @@ namespace Lab1
             {
                 { ClientCommand.Time, string.Format(@"^TIME{0}$", messageEnd) },
                 { ClientCommand.Close, string.Format(@"CLOSE{0}$", messageEnd) },
-                { ClientCommand.Echo, string.Format(@"ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) }
+                { ClientCommand.Echo, string.Format(@"ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
+                { ClientCommand.Upload, string.Format(@"UPLOAD(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
             };
         }
 
