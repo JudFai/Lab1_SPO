@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -69,15 +70,33 @@ namespace Lab1
 
         private void ReceivingFile(Socket handler)
         {
+            var timeout = DateTime.Now.AddSeconds(30);
+            var byteCollection = new List<byte>();
+            var path = Path.ChangeExtension(Path.Combine("Upload", DateTime.Now.Ticks.ToString()), _fileExtension);
+            var lengthRecData = -1;
             while (true)
             {
-                // 1 Gbyte
                 var buffer = new byte[1048576];
-                var lengthRecData = handler.Receive(buffer);
-                //data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
-                //if (data.Contains(dataEnd))
-                //    break;
+                lengthRecData = handler.Receive(buffer, buffer.Length, SocketFlags.None);
+                if (lengthRecData > 0)
+                {
+                    timeout = DateTime.Now.AddSeconds(30);
+                    byteCollection.AddRange(buffer);
+                }
+                else
+                {
+                    if (timeout < DateTime.Now)
+                        throw new TimeoutException("ReceivingFile");
+                }
+                
+                break;
             }
+
+            var pathToDirectory = Path.GetDirectoryName(path);
+            if (!Directory.Exists(pathToDirectory))
+                Directory.CreateDirectory(pathToDirectory);
+
+            File.WriteAllBytes(path, byteCollection.Take(lengthRecData).ToArray());
         }
 
         #endregion
@@ -103,10 +122,13 @@ namespace Lab1
                     return;
 
                 var handler = _listener.Accept();
-                if (ReceivingFileMode)
-                    ReceivingFile(handler);
-                else
-                    ReceivingData(handler, dataEnd);
+                while (true)
+                {
+                    if (ReceivingFileMode)
+                        ReceivingFile(handler);
+                    else
+                        ReceivingData(handler, dataEnd);   
+                }
             }
         }
 

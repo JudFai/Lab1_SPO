@@ -2,6 +2,6 @@
 {
     interface IMessageManager
     {
-        ServerMessage Interpret(IServer server, ClientMessage clientMessage);
+        ServerMessage Interpret(ISocketListener listener, ClientMessage clientMessage);
     }
 }

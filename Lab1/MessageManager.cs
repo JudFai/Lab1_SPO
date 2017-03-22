@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -43,7 +44,7 @@ namespace Lab1
 
         #region IMessageManager Members
 
-        public ServerMessage Interpret(IServer server, ClientMessage clientMessage)
+        public ServerMessage Interpret(ISocketListener listener, ClientMessage clientMessage)
         {
             var data = string.Empty;
             switch (clientMessage.ClientCommand)
@@ -65,13 +66,42 @@ namespace Lab1
                 case ClientCommand.Close:
                     try
                     {
-                        server.Dispose();
+                        listener.Dispose();
                         data = "SUCCESS";
                     }
                     catch
                     {
                         data = "ERROR";
                     }
+                    break;
+                case ClientCommand.Upload:
+                    var pathToFile = clientMessage.CommandParameters.FirstOrDefault();
+                    if (pathToFile != null)
+                    {
+                        var ext = string.Empty;
+                        try
+                        {
+                            ext = Path.GetExtension((string)pathToFile);
+                            if (!listener.ReceivingFileMode)
+                            {
+                                listener.ChangeModeToReceivingFile(ext);
+                                data = "SUCCESS";
+                            }
+                            else
+                            {
+                                data = "UPLOADING_WAS_ALREADY_ERROR";
+                            }
+                        }
+                        catch
+                        {
+                            data = "ERROR";
+                        }
+                    }
+                    else
+                    {
+                        data = "ERROR";
+                    }
+
                     break;
                 default:
                     throw new NotImplementedException();

@@ -43,8 +43,8 @@ namespace Lab1
 
         private void RemoveClientFromCollection(IClient client)
         {
-            ConnectedClients.Remove(client);
-            client.Dispose();
+            //ConnectedClients.Remove(client);
+            //client.Dispose();
         }
 
         private IClient AddNotExistClientToCollection(Socket handler)
@@ -73,7 +73,7 @@ namespace Lab1
             var handler = e.Handler;
             var client = AddNotExistClientToCollection(handler);
             var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
-            var serverMessage = _messageManager.Interpret(this, clientMessage);
+            var serverMessage = _messageManager.Interpret(_listener, clientMessage);
             client.SendMessage(serverMessage);
         }
 
