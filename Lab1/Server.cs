@@ -16,6 +16,7 @@ namespace Lab1
         private readonly IClientDataConverter _dataToClientMessageConverter;
         private readonly ISocketListener _listener;
         private readonly IDataConverter _dataConverter;
+        private readonly IFileManager _fileManager;
 
         #endregion
 
@@ -28,13 +29,16 @@ namespace Lab1
 
             _dataConverter = new DataConverter(Encoding.ASCII);
 
-            _listener = new SocketListener(connection, _dataConverter);
+            _listener = new SocketListener(connection/*, _dataConverter*/);
             _listener.DataReceived += OnDataReceived;
 
             _clientMessageToServerMessageConverter = MessageConverter.Instance;
             _messageManager = MessageManager.Instance;
             _dataToClientMessageConverter =
                 ClientDataConverter.GetInstance(_clientMessageToServerMessageConverter.MessageEnd);
+
+            UploadingFiles = new List<IUploadingFile>();
+            _fileManager = FileManager.GetInstance("Upload");
         }
 
         #endregion
@@ -73,7 +77,7 @@ namespace Lab1
             var handler = e.Handler;
             var client = AddNotExistClientToCollection(handler);
             var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
-            var serverMessage = _messageManager.Interpret(_listener, clientMessage);
+            var serverMessage = _messageManager.Interpret(_listener, client, clientMessage);
             client.SendMessage(serverMessage);
         }
 
@@ -82,12 +86,14 @@ namespace Lab1
         #region IServer Members
 
         public List<IClient> ConnectedClients { get; private set; }
+        public List<IUploadingFile> UploadingFiles { get; private set; }
         public ISocketConnection Connection { get; private set; }
 
         public void Start()
         {
             try
             {
+                _fileManager.ClearDirectory();
                 _listener.Start(_clientMessageToServerMessageConverter.MessageEnd);
             }
             // TODO: обработка исключений

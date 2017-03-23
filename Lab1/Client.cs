@@ -25,6 +25,7 @@ namespace Lab1
         public Client(Socket handler, IDataConverter dataConverter)
         {
             Handler = handler;
+            Address = handler.RemoteEndPoint.ToString();
             _dataConverter = dataConverter;
         }
 
@@ -47,6 +48,7 @@ namespace Lab1
                 SentMessage(this, EventArgs.Empty);
         }
 
+        public string Address { get; private set; }
         public event EventHandler SentMessage;
 
         public void SendMessage(IMessage message)

@@ -47,15 +47,18 @@
     <Compile Include="ClientDataConverter.cs" />
     <Compile Include="ClientMessage.cs" />
     <Compile Include="DataConverter.cs" />
+    <Compile Include="FileManager.cs" />
     <Compile Include="IClient.cs" />
     <Compile Include="IClientDataConverter.cs" />
     <Compile Include="IDataConverter.cs" />
+    <Compile Include="IFileManager.cs" />
     <Compile Include="IMessage.cs" />
     <Compile Include="IMessageConverter.cs" />
     <Compile Include="IMessageManager.cs" />
     <Compile Include="ISocketListener.cs" />
     <Compile Include="IServer.cs" />
     <Compile Include="ISocketConnection.cs" />
+    <Compile Include="IUploadingFile.cs" />
     <Compile Include="MessageConverter.cs" />
     <Compile Include="MessageManager.cs" />
     <Compile Include="Program.cs" />
@@ -64,6 +67,7 @@
     <Compile Include="ServerMessage.cs" />
     <Compile Include="SocketConnection.cs" />
     <Compile Include="SocketListener.cs" />
+    <Compile Include="UploadingFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

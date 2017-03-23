@@ -8,6 +8,7 @@ namespace Lab1
     public interface IServer : IDisposable
     {
         List<IClient> ConnectedClients { get; }
+        List<IUploadingFile> UploadingFiles { get; }
         ISocketConnection Connection { get; }
         void Start();
     }

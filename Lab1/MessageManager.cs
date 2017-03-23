@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Lab1
@@ -44,7 +45,7 @@ namespace Lab1
 
         #region IMessageManager Members
 
-        public ServerMessage Interpret(ISocketListener listener, ClientMessage clientMessage)
+        public ServerMessage Interpret(ISocketListener listener, IClient client, ClientMessage clientMessage)
         {
             var data = string.Empty;
             switch (clientMessage.ClientCommand)
@@ -75,27 +76,18 @@ namespace Lab1
                     }
                     break;
                 case ClientCommand.Upload:
-                    var pathToFile = clientMessage.CommandParameters.FirstOrDefault();
-                    if (pathToFile != null)
+                    var pathToFile = clientMessage.CommandParameters[0];
+                    var fileSize = clientMessage.CommandParameters[1];
+                    if ((pathToFile != null) && (fileSize != null))
                     {
-                        var ext = string.Empty;
-                        try
+                        IUploadingFile uploadingFile = new UploadingFile((string)pathToFile, client, (int)fileSize);
+                        if (!listener.ReceivingFileMode)
                         {
-                            ext = Path.GetExtension((string)pathToFile);
-                            if (!listener.ReceivingFileMode)
-                            {
-                                listener.ChangeModeToReceivingFile(ext);
-                                data = "SUCCESS";
-                            }
-                            else
-                            {
-                                data = "UPLOADING_WAS_ALREADY_ERROR";
-                            }
+                            listener.ChangeModeToReceivingFile();
+                            data = "SUCCESS";
                         }
-                        catch
-                        {
-                            data = "ERROR";
-                        }
+                        else
+                            data = "UPLOADING_WAS_ALREADY";
                     }
                     else
                     {

@@ -11,19 +11,18 @@ namespace Lab1
     {
         #region Fields
 
-        private readonly Socket _listener;
+        private Socket _listener;
         private readonly ISocketConnection _connection;
-        private readonly IDataConverter _dataConverter;
-        private bool _listeningWasStopped;
-        private string _fileExtension;
+        //private readonly IDataConverter _dataConverter;
+        private Socket _currentClient;
 
         #endregion
 
         #region Constructors
 
-        public SocketListener(ISocketConnection connection, IDataConverter dataConverter)
+        public SocketListener(ISocketConnection connection/*, IDataConverter dataConverter*/)
         {
-            _dataConverter = dataConverter;
+            //_dataConverter = dataConverter;
             _connection = connection;
             _listener = new Socket(
                 _connection.AddressFamily, 
@@ -35,69 +34,79 @@ namespace Lab1
 
         #region Private Methods
 
-        private void ReceivingData(Socket handler, string dataEnd)
+        private void ReceivingData()
         {
-            var data = string.Empty;
-            var timeout = DateTime.Now.AddSeconds(10);
-            var wasTimeout = false;
+            //var data = string.Empty;
+            //var timeout = DateTime.Now.AddSeconds(10);
+            //var wasTimeout = false;
+            //while (true)
+            //{
+                //if (timeout < DateTime.Now)
+                //{
+                //    wasTimeout = true;
+                //    break;
+                //}
+
             while (true)
             {
-                if (timeout < DateTime.Now)
+                try
                 {
-                    wasTimeout = true;
+                    var buffer = new byte[256];
+                    var lengthRecData = _currentClient.Receive(buffer);
+                    OnDataReceived(new SocketDataEventArgs(_currentClient, buffer.Take(lengthRecData).ToArray()));
+                }
+                catch
+                {
+                    _currentClient = null;
                     break;
                 }
-
-                var buffer = new byte[256];
-                var lengthRecData = handler.Receive(buffer);
-                data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
-                if (data.Contains(dataEnd))
-                    break;
             }
+                //data += _dataConverter.GetString(buffer.Take(lengthRecData).ToArray());
+                //if (data.Contains(dataEnd))
+                //    break;
+            //}
 
             // Если был таймаут, то уничтожаем ресурсы полученного сокета и продолжаем сканирование
-            if (wasTimeout)
-            {
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
-                return;
-            }
+            //if (wasTimeout)
+            //{
+            //    handler.Shutdown(SocketShutdown.Both);
+            //    handler.Close();
+            //    return;
+            //}
 
-            Console.WriteLine("RECEIVED DATA FROM <{0}>: {1}", handler.RemoteEndPoint, data.Replace(Environment.NewLine, string.Empty));
-
-            OnDataReceived(new SocketDataEventArgs(handler, data));
+            //Console.WriteLine("RECEIVED DATA FROM <{0}>: {1}", handler.RemoteEndPoint, data.Replace(Environment.NewLine, string.Empty));
         }
 
-        private void ReceivingFile(Socket handler)
-        {
-            var timeout = DateTime.Now.AddSeconds(30);
-            var byteCollection = new List<byte>();
-            var path = Path.ChangeExtension(Path.Combine("Upload", DateTime.Now.Ticks.ToString()), _fileExtension);
-            var lengthRecData = -1;
-            while (true)
-            {
-                var buffer = new byte[1048576];
-                lengthRecData = handler.Receive(buffer, buffer.Length, SocketFlags.None);
-                if (lengthRecData > 0)
-                {
-                    timeout = DateTime.Now.AddSeconds(30);
-                    byteCollection.AddRange(buffer);
-                }
-                else
-                {
-                    if (timeout < DateTime.Now)
-                        throw new TimeoutException("ReceivingFile");
-                }
+        //private void ReceivingFile(Socket handler)
+        //{
+        //    var timeout = DateTime.Now.AddSeconds(30);
+        //    var byteCollection = new List<byte>();
+        //    //var path = Path.ChangeExtension(Path.Combine("Upload", DateTime.Now.Ticks.ToString()), _fileExtension);
+        //    var lengthRecData = -1;
+        //    while (true)
+        //    {
+        //        var buffer = new byte[1048576];
+        //        lengthRecData = handler.Receive(buffer, buffer.Length, SocketFlags.None);
+        //        if (lengthRecData > 0)
+        //        {
+        //            timeout = DateTime.Now.AddSeconds(30);
+        //            byteCollection.AddRange(buffer);
+        //        }
+        //        else
+        //        {
+        //            if (timeout < DateTime.Now)
+        //                throw new TimeoutException("ReceivingFile");
+        //        }
                 
-                break;
-            }
+        //        break;
+        //    }
 
-            var pathToDirectory = Path.GetDirectoryName(path);
-            if (!Directory.Exists(pathToDirectory))
-                Directory.CreateDirectory(pathToDirectory);
+        //    var pathToDirectory = Path.GetDirectoryName(path);
+        //    if (!Directory.Exists(pathToDirectory))
+        //        Directory.CreateDirectory(pathToDirectory);
 
-            File.WriteAllBytes(path, byteCollection.Take(lengthRecData).ToArray());
-        }
+        //    File.WriteAllBytes(path, byteCollection.Take(lengthRecData).ToArray());
+        //}
 
         #endregion
 
@@ -109,38 +118,20 @@ namespace Lab1
                 DataReceived(this, e);
         }
 
-        public bool ReceivingFileMode { get; private set; }
         public event EventHandler<SocketDataEventArgs> DataReceived;
-        public void Start(string dataEnd)
+        public void Start()
         {
             _listener.Bind(_connection.Address);
             _listener.Listen(10);
             Console.WriteLine("Start listening");
             while (true)
             {
-                if (_listeningWasStopped)
-                    return;
-
-                var handler = _listener.Accept();
-                while (true)
-                {
-                    if (ReceivingFileMode)
-                        ReceivingFile(handler);
-                    else
-                        ReceivingData(handler, dataEnd);   
-                }
+                if (_listener == null)
+                    break;
+                
+                _currentClient = _listener.Accept();
+                ReceivingData();
             }
-        }
-
-        public void ChangeModeToReceivingFile(string extension)
-        {
-            ReceivingFileMode = true;
-            _fileExtension = extension;
-        }
-
-        public void ChangeModeToReceivingData()
-        {
-            ReceivingFileMode = false;
         }
 
         #endregion
@@ -151,8 +142,10 @@ namespace Lab1
         {
             // TODO: Dispose, Disconnect или то и другое
             DataReceived = null;
-            _listeningWasStopped = true;
+            _currentClient.Dispose();
             _listener.Dispose();
+            _currentClient = null;
+            _listener = null;
         }
 
         #endregion

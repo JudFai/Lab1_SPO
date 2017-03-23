@@ -6,9 +6,9 @@ namespace Lab1
     class SocketDataEventArgs : EventArgs
     {
         public Socket Handler { get; private set; }
-        public string Data { get; private set; }
+        public byte[] Data { get; private set; }
 
-        public SocketDataEventArgs(Socket handler, string data)
+        public SocketDataEventArgs(Socket handler, byte[] data)
         {
             Handler = handler;
             Data = data;
@@ -17,10 +17,7 @@ namespace Lab1
 
     interface ISocketListener : IDisposable
     {
-        bool ReceivingFileMode { get; }
         event EventHandler<SocketDataEventArgs> DataReceived;
-        void Start(string dataEnd);
-        void ChangeModeToReceivingFile(string extension);
-        void ChangeModeToReceivingData();
+        void Start();
     }
 }

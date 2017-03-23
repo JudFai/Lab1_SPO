@@ -103,6 +103,30 @@ namespace Lab1Client
                             Console.WriteLine("No connection to server or file not found");
 
                         break;
+                    case "TIME":
+                        if (_client != null)
+                        {
+                            var uploadCommand = Encoding.ASCII.GetBytes(input + Environment.NewLine);
+                            _client.Send(uploadCommand);
+                            var receivedData = new byte[256];
+                            var receivedLength = _client.Receive(receivedData);
+                            var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
+                            Console.WriteLine(result);
+                        }
+
+                        break;
+                    case "CLOSE":
+                        if (_client != null)
+                        {
+                            var uploadCommand = Encoding.ASCII.GetBytes(input + Environment.NewLine);
+                            _client.Send(uploadCommand);
+                            var receivedData = new byte[256];
+                            var receivedLength = _client.Receive(receivedData);
+                            var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
+                            Console.WriteLine(result);
+                        }
+
+                        break;
                     case "QUIT":
                         if (_client != null)
                         {
