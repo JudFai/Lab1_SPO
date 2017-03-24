@@ -11,5 +11,6 @@ namespace Lab1
         List<IUploadingFile> UploadingFiles { get; }
         ISocketConnection Connection { get; }
         void Start();
+        void ChangeReceivingModeFile(IUploadingFile uploadingFile);
     }
 }

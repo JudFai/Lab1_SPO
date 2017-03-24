@@ -45,7 +45,7 @@ namespace Lab1
 
         #region IMessageManager Members
 
-        public ServerMessage Interpret(ISocketListener listener, IClient client, ClientMessage clientMessage)
+        public ServerMessage Interpret(IServer server, IClient client, ClientMessage clientMessage)
         {
             var data = string.Empty;
             switch (clientMessage.ClientCommand)
@@ -67,7 +67,7 @@ namespace Lab1
                 case ClientCommand.Close:
                     try
                     {
-                        listener.Dispose();
+                        server.Dispose();
                         data = "SUCCESS";
                     }
                     catch
@@ -81,9 +81,9 @@ namespace Lab1
                     if ((pathToFile != null) && (fileSize != null))
                     {
                         IUploadingFile uploadingFile = new UploadingFile((string)pathToFile, client, (int)fileSize);
-                        if (!listener.ReceivingFileMode)
+                        if (!server.ReceivingFileMode)
                         {
-                            listener.ChangeModeToReceivingFile();
+                            server.ChangeModeToReceivingFile();
                             data = "SUCCESS";
                         }
                         else

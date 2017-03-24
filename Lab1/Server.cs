@@ -74,10 +74,15 @@ namespace Lab1
 
         private void OnDataReceived(object sender, SocketDataEventArgs e)
         {
-            var handler = e.Handler;
+            Received(e.Handler, e.Data);
+        }
+
+        private void Received(Socket handler, byte[] data)
+        {
             var client = AddNotExistClientToCollection(handler);
-            var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
-            var serverMessage = _messageManager.Interpret(_listener, client, clientMessage);
+            var dataStr = _dataConverter.GetString(data);
+            var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(dataStr);
+            var serverMessage = _messageManager.Interpret(this, client, clientMessage);
             client.SendMessage(serverMessage);
         }
 
@@ -94,7 +99,7 @@ namespace Lab1
             try
             {
                 _fileManager.ClearDirectory();
-                _listener.Start(_clientMessageToServerMessageConverter.MessageEnd);
+                _listener.Start();
             }
             // TODO: обработка исключений
             catch (Exception)
@@ -102,6 +107,12 @@ namespace Lab1
                 
                 throw;
             }
+        }
+
+        public void ChangeReceivingModeFile(IUploadingFile uploadingFile)
+        {
+            if (UploadingFiles.Contains(uploadingFile))
+                UploadingFiles.Add(uploadingFile);
         }
 
         #endregion

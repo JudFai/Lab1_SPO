@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Lab1
 {
-    public interface IUploadingFile
+    public interface IUploadingFile : IEquatable<IUploadingFile>
     {
         string Path { get; }
         IClient Client { get; }

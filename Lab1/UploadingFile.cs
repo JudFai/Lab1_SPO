@@ -31,5 +31,17 @@ namespace Lab1
         public List<byte> CurrentBytes { get; private set; }
 
         #endregion
+
+        #region IEquatable Members
+
+        public bool Equals(IUploadingFile other)
+        {
+            if (other == null)
+                return false;
+
+            return Path == other.Path && Client.Equals(other.Client);
+        }
+
+        #endregion
     }
 }
