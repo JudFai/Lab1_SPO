@@ -1,4 +1,4 @@
-﻿namespace Lab1
+﻿namespace Lab1.Server
 {
     public enum ClientCommand 
     {
@@ -6,6 +6,8 @@
         Echo = 1,
         Time = 2,
         Close = 3,
-        Upload = 4
+        BeginUpload = 4,
+        ContinueUpload = 5,
+        FinishUpload = 6
     }
 }

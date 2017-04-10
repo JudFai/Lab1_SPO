@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Lab1
+namespace Lab1.Server
 {
     class UploadingFile : IUploadingFile
     {
@@ -29,6 +27,24 @@ namespace Lab1
         public IClient Client { get; private set; }
         public int Size { get; private set; }
         public List<byte> CurrentBytes { get; private set; }
+
+        public int GetLoadingPercentage()
+        {
+            var percents = Convert.ToInt32(Math.Round((CurrentBytes.Count / (double)Size) * 100));
+            return percents > 100 ? 100 : percents;
+        }
+
+        #endregion
+
+        #region IEquatable Members
+
+        public bool Equals(IUploadingFile other)
+        {
+            if (other == null)
+                return false;
+
+            return Path == other.Path && Client.Equals(other.Client);
+        }
 
         #endregion
     }

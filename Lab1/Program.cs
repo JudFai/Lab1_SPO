@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
 namespace Lab1
 {
     class Program
@@ -14,45 +13,33 @@ namespace Lab1
         private static string EndCommandRow = Environment.NewLine;
         static void Main(string[] args)
         {
-            var hostName = Dns.GetHostName();
-            var ipHostInfo = Dns.GetHostEntry(hostName);
-            var ipAddress = ipHostInfo.AddressList.LastOrDefault(p => p.AddressFamily == AddressFamily.InterNetwork);
-            var localEndPoint = new IPEndPoint(ipAddress, 10001);
+            Console.Write("Select type of application: server(s) or client(c): ");
+            var key = Console.ReadKey();
+            Console.WriteLine();
+            if (key.Key == ConsoleKey.S)
+            {
+                var hostName = Dns.GetHostName();
+                var ipHostInfo = Dns.GetHostEntry(hostName);
+                var ipAddress = ipHostInfo.AddressList.LastOrDefault(p => p.AddressFamily == AddressFamily.InterNetwork);
+                var localEndPoint = new IPEndPoint(ipAddress, 10001);
 
-            IServer server = new Server(new SocketConnection(localEndPoint, ProtocolType.Tcp, SocketType.Stream, AddressFamily.InterNetwork));
-            server.Start();
-
-            
-            //var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //try
-            //{
-            //    listener.Bind(localEndPoint);
-            //    listener.Listen(10);
-            //    while (true)
-            //    {
-            //        Console.WriteLine("Start listening");
-            //        var handler = listener.Accept();
-            //        var data = string.Empty;
-            //        while (true)
-            //        {
-            //            var buffer = new byte[256];
-            //            var lengthRecData = handler.Receive(buffer);
-            //            data += Encoding.ASCII.GetString(buffer, 0, lengthRecData);
-            //            if (data.Contains(EndCommandRow))
-            //                break;
-            //        }
-
-            //        var match = Regex.Match(data, string.Format(@"^{0}{1}$", "TIME", EndCommandRow), RegexOptions.IgnoreCase);
-            //        //switch (data)
-            //        //{
-            //        //    case "":
-
-            //        //}
-            //    }
-            //}
-            //catch (Exception)
-            //{
-            //}
+                Server.IServer server = new Server.Server(new Server.SocketConnection(localEndPoint, ProtocolType.Tcp, SocketType.Stream, AddressFamily.InterNetwork));
+                server.Start();
+            }
+            else if (key.Key == ConsoleKey.C)
+            {
+                Client.IClient client = new Client.Client();
+                while (true)
+                {
+                    Console.WriteLine("Enter command:");
+                    var input = Console.ReadLine();
+                    client.SendCommand(input);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid character was entered");
+            }
         }
     }
 }

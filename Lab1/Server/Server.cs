@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Lab1
+namespace Lab1.Server
 {
     public class Server : IServer
     {
@@ -17,6 +16,9 @@ namespace Lab1
         private readonly ISocketListener _listener;
         private readonly IDataConverter _dataConverter;
         private readonly IFileManager _fileManager;
+
+        //private bool _fileIsUploading;
+        //private IUploadingFile _currentUploadingFile;
 
         #endregion
 
@@ -31,14 +33,15 @@ namespace Lab1
 
             _listener = new SocketListener(connection/*, _dataConverter*/);
             _listener.DataReceived += OnDataReceived;
+            _listener.ClientConnected += OnClientConnected;
 
             _clientMessageToServerMessageConverter = MessageConverter.Instance;
-            _messageManager = MessageManager.Instance;
+            _fileManager = FileManager.GetInstance("Upload");
+            _messageManager = MessageManager.GetInstance(_dataConverter, _fileManager);
             _dataToClientMessageConverter =
                 ClientDataConverter.GetInstance(_clientMessageToServerMessageConverter.MessageEnd);
 
-            UploadingFiles = new List<IUploadingFile>();
-            _fileManager = FileManager.GetInstance("Upload");
+            //UploadingFiles = new List<IUploadingFile>();
         }
 
         #endregion
@@ -54,8 +57,9 @@ namespace Lab1
         private IClient AddNotExistClientToCollection(Socket handler)
         {
             //handler.SendFile("", null, null, T)
+            var address = handler.RemoteEndPoint.ToString();
             IClient client = new Client(handler, _dataConverter);
-            var foundClient = ConnectedClients.FirstOrDefault(p => p.Equals(client));
+            var foundClient = ConnectedClients.FirstOrDefault(p => p.Address == address);
             if (foundClient != null)
                 client = foundClient;
             else
@@ -74,11 +78,39 @@ namespace Lab1
 
         private void OnDataReceived(object sender, SocketDataEventArgs e)
         {
-            var handler = e.Handler;
-            var client = AddNotExistClientToCollection(handler);
-            var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(e.Data);
-            var serverMessage = _messageManager.Interpret(_listener, client, clientMessage);
-            client.SendMessage(serverMessage);
+            Received(e.Handler, e.Data);
+        }
+
+        private void OnClientConnected(object sender, SocketEventArgs e)
+        {
+            Console.WriteLine("Client '{0}' connected to server", e.Handler.RemoteEndPoint);
+            Console.WriteLine();
+        }
+
+        private void Received(Socket handler, byte[] data)
+        {
+            //if (_fileIsUploading)
+            //{
+            //    var client = AddNotExistClientToCollection(handler);
+            //    _currentUploadingFile.CurrentBytes.AddRange(data);
+            //    var percents = _currentUploadingFile.GetLoadingPercentage();
+            //    Console.WriteLine("Percents: {0}%", percents);
+            //    client.SendMessage("OK");
+            //    if (_currentUploadingFile.CurrentBytes.Count >= _currentUploadingFile.Size)
+            //    {
+            //        _fileManager.SaveFile(_currentUploadingFile);
+            //        UploadingFiles.Remove(_currentUploadingFile);
+            //        _fileIsUploading = false;
+            //    }
+            //}
+            //else
+            //{
+                var client = AddNotExistClientToCollection(handler);
+                var dataStr = _dataConverter.GetString(data);
+                var clientMessage = _dataToClientMessageConverter.ConvertDataToClientMessage(dataStr);
+                var serverMessage = _messageManager.Interpret(this, client, clientMessage);
+                client.SendMessage(serverMessage);
+            //}
         }
 
         #endregion
@@ -86,7 +118,7 @@ namespace Lab1
         #region IServer Members
 
         public List<IClient> ConnectedClients { get; private set; }
-        public List<IUploadingFile> UploadingFiles { get; private set; }
+        //public List<IUploadingFile> UploadingFiles { get; private set; }
         public ISocketConnection Connection { get; private set; }
 
         public void Start()
@@ -94,15 +126,26 @@ namespace Lab1
             try
             {
                 _fileManager.ClearDirectory();
-                _listener.Start(_clientMessageToServerMessageConverter.MessageEnd);
+                _listener.Start();
             }
             // TODO: обработка исключений
             catch (Exception)
             {
-                
-                throw;
             }
         }
+
+        //public bool ChangeReceivingModeFile(IUploadingFile uploadingFile)
+        //{
+        //    //if (_fileIsUploading)
+        //    //    return false;
+
+        //    //if (UploadingFiles.Contains(uploadingFile))
+        //    //    UploadingFiles.Add(uploadingFile);
+
+        //    //_fileIsUploading = true;
+        //    //_currentUploadingFile = uploadingFile;
+        //    return true;
+        //}
 
         #endregion
 

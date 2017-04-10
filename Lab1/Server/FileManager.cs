@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
-namespace Lab1
+namespace Lab1.Server
 {
     class FileManager : IFileManager
     {
@@ -42,7 +39,12 @@ namespace Lab1
         public string PathToDirectory { get; private set; }
         public void SaveFile(IUploadingFile uploadingFile)
         {
-            throw new NotImplementedException();
+            if (uploadingFile.CurrentBytes.Count != uploadingFile.Size)
+                throw new ArgumentException();
+
+            var ext = Path.GetExtension(uploadingFile.Path);
+            var path = Path.ChangeExtension(Path.Combine(PathToDirectory, DateTime.Now.Ticks.ToString()), ext);
+            File.WriteAllBytes(path, uploadingFile.CurrentBytes.ToArray());
         }
 
         public void ClearDirectory()

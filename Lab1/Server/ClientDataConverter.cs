@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Lab1
+namespace Lab1.Server
 {
     class ClientDataConverter : IClientDataConverter
     {
@@ -25,14 +23,16 @@ namespace Lab1
         {
             _groupParamsCollection = new List<string>
             {
-                "param1"
+                "param1", "param2"
             };
             _commandPatternDictionary = new Dictionary<ClientCommand, string>
             {
                 { ClientCommand.Time, string.Format(@"^TIME{0}$", messageEnd) },
-                { ClientCommand.Close, string.Format(@"CLOSE{0}$", messageEnd) },
-                { ClientCommand.Echo, string.Format(@"ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
-                { ClientCommand.Upload, string.Format(@"UPLOAD(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
+                { ClientCommand.Close, string.Format(@"^CLOSE{0}$", messageEnd) },
+                { ClientCommand.Echo, string.Format(@"^ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
+                { ClientCommand.BeginUpload, string.Format(@"^UPLOAD(\s'(?<{0}>.*)?'),(\s'(?<{1}>\d+)?'){2}$", _groupParamsCollection[0], _groupParamsCollection[1], messageEnd) },
+                { ClientCommand.ContinueUpload, string.Format(@"^CONTINUE_UPLOAD{0}$", messageEnd) },
+                { ClientCommand.FinishUpload, string.Format(@"^FINISH_UPLOAD{0}$", messageEnd) }
             };
         }
 
