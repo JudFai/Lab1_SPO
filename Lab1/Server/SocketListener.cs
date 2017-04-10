@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 
-namespace Lab1
+namespace Lab1.Server
 {
     class SocketListener : ISocketListener
     {
@@ -118,7 +115,15 @@ namespace Lab1
                 DataReceived(this, e);
         }
 
+        private void OnClientConnected(SocketEventArgs e)
+        {
+            if (ClientConnected != null)
+                ClientConnected(this, e);
+        }
+
         public event EventHandler<SocketDataEventArgs> DataReceived;
+        public event EventHandler<SocketEventArgs> ClientConnected;
+
         public void Start()
         {
             _listener.Bind(_connection.Address);
@@ -130,6 +135,7 @@ namespace Lab1
                     break;
                 
                 _currentClient = _listener.Accept();
+                OnClientConnected(new SocketEventArgs(_currentClient));
                 ReceivingData();
             }
         }

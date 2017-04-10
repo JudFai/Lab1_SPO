@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 
-namespace Lab1
+namespace Lab1.Server
 {
     class Client : IClient
     {
@@ -55,6 +52,15 @@ namespace Lab1
         {
             var bytes = _dataConverter.GetBytes(message.Data);
             Console.WriteLine("SEND DATA TO <{0}>: {1}", Handler.RemoteEndPoint, message.Data.Replace(Environment.NewLine, string.Empty));
+            Console.WriteLine();
+            var length = Handler.Send(bytes);
+            OnSentMessage();
+        }
+
+        public void SendMessage(string message)
+        {
+            var bytes = _dataConverter.GetBytes(message);
+            Console.WriteLine("SEND DATA TO <{0}>: {1}", Handler.RemoteEndPoint, message.Replace(Environment.NewLine, string.Empty));
             Console.WriteLine();
             var length = Handler.Send(bytes);
             OnSentMessage();

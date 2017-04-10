@@ -92,7 +92,9 @@ namespace Lab1Client
                         var fileNameGroup = match.Groups["param1"];
                         if (fileNameGroup.Success && (_client != null) && File.Exists(fileNameGroup.Value))
                         {
-                            var uploadCommand = Encoding.ASCII.GetBytes(input + Environment.NewLine);
+                            var fi = new FileInfo(fileNameGroup.Value);
+                            var uploadCmd = string.Format("{0}, '{1}'{2}", input, fi.Length, Environment.NewLine);
+                            var uploadCommand = Encoding.ASCII.GetBytes(uploadCmd);
                             _client.Send(uploadCommand);
                             var receivedData = new byte[256];
                             var receivedLength = _client.Receive(receivedData);
@@ -104,6 +106,18 @@ namespace Lab1Client
 
                         break;
                     case "TIME":
+                        if (_client != null)
+                        {
+                            var uploadCommand = Encoding.ASCII.GetBytes(input + Environment.NewLine);
+                            _client.Send(uploadCommand);
+                            var receivedData = new byte[256];
+                            var receivedLength = _client.Receive(receivedData);
+                            var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
+                            Console.WriteLine(result);
+                        }
+
+                        break;
+                    case "ECHO":
                         if (_client != null)
                         {
                             var uploadCommand = Encoding.ASCII.GetBytes(input + Environment.NewLine);

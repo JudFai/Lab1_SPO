@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
-namespace Lab1
+namespace Lab1.Server
 {
     public interface ISocketConnection
     {
