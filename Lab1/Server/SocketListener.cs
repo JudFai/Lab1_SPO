@@ -80,13 +80,13 @@ namespace Lab1.Server
         private byte[] ReceiveAllData(Socket client)
         {
             var byteCollection = new List<byte>();
-            client.ReceiveTimeout = 100;
+            client.ReceiveTimeout = 50;
             var receivedLength = 0;
             while (true)
             {
                 try
                 {
-                    var receivedData = new byte[1024];
+                    var receivedData = new byte[1048576];
                     receivedLength = client.Receive(receivedData);
                     if (receivedLength == 0)
                         return null;

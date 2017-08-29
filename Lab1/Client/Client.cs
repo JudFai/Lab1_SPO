@@ -121,6 +121,7 @@ namespace Lab1.Client
                         var receivedData = new byte[256];
                         var receivedLength = _client.Receive(receivedData);
                         var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
+                        var recievedTimeout = 50;
                         if (result.Contains("OK"))
                         {
                             var start = 0;
@@ -128,7 +129,7 @@ namespace Lab1.Client
                             if (arr.Length > 1)
                                 int.TryParse(arr[1], out start);
 
-                            var step = 4096;
+                            var step = 1048576;
                             var fileArr = File.ReadAllBytes(fileNameGroup.Value);
                             for (var i = start; i < fileArr.Length; i += step)
                             {
@@ -139,7 +140,7 @@ namespace Lab1.Client
                                     Environment.NewLine);
                                 _client.Send(Encoding.ASCII.GetBytes(continueUpload));
                                 // Вся эта конструкция необходима, чтоб получить сразу весь буфер
-                                _client.ReceiveTimeout = 100;
+                                _client.ReceiveTimeout = recievedTimeout;
                                 while (true)
                                 {
                                     try
@@ -178,7 +179,7 @@ namespace Lab1.Client
                             receivedData = new byte[256];
                             var buff = new List<byte>();
                             // Вся эта конструкция необходима, чтоб получить сразу весь буфер
-                            _client.ReceiveTimeout = 100;
+                            _client.ReceiveTimeout = recievedTimeout;
                             while (true)
                             {
                                 try
