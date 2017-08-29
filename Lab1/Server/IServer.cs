@@ -10,6 +10,5 @@ namespace Lab1.Server
         ISocketConnection Connection { get; }
         void Start();
         //bool ChangeReceivingModeFile(IUploadingFile uploadingFile);
-        void WaitFileData();
     }
 }

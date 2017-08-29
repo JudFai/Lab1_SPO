@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Lab1.Server
 {
@@ -43,7 +44,8 @@ namespace Lab1.Server
             if (other == null)
                 return false;
 
-            return Path == other.Path && Client.Equals(other.Client);
+            return Path == other.Path &&
+                (Client.Address.Split(':').FirstOrDefault() == other.Client.Address.Split(':').FirstOrDefault());
         }
 
         #endregion

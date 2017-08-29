@@ -123,13 +123,20 @@ namespace Lab1.Client
                         var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
                         if (result.Contains("OK"))
                         {
+                            var start = 0;
+                            var arr = result.Split('_');
+                            if (arr.Length > 1)
+                                int.TryParse(arr[1], out start);
+
                             var step = 4096;
                             var fileArr = File.ReadAllBytes(fileNameGroup.Value);
-                            for (var i = 0; i < fileArr.Length; i += step)
+                            for (var i = start; i < fileArr.Length; i += step)
                             {
                                 var recBuffer = new List<byte>();
-                                var continueUpload = string.Format("CONTINUE_UPLOAD {0}", 
-                                    Encoding.ASCII.GetString(fileArr.Skip(i).Take(step).ToArray()));
+                                var byteArr = fileArr.Skip(i).Take(step).ToArray();
+                                var continueUpload = string.Format("CONTINUE_UPLOAD '{0}'{1}",
+                                    string.Join(" ", byteArr.Select(p => p.ToString("X2"))),
+                                    Environment.NewLine);
                                 _client.Send(Encoding.ASCII.GetBytes(continueUpload));
                                 // Вся эта конструкция необходима, чтоб получить сразу весь буфер
                                 _client.ReceiveTimeout = 100;
@@ -142,7 +149,8 @@ namespace Lab1.Client
                                     }
                                     catch
                                     {
-                                        break;
+                                        if (recBuffer.Count > 0)
+                                            break;
                                     }
                                 }
 
@@ -168,14 +176,32 @@ namespace Lab1.Client
                             var finishUploadingCommand = string.Format("FINISH_UPLOAD{0}", Environment.NewLine);
                             _client.Send(Encoding.ASCII.GetBytes(finishUploadingCommand));
                             receivedData = new byte[256];
-                            receivedLength = _client.Receive(receivedData);
-                            result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
+                            var buff = new List<byte>();
+                            // Вся эта конструкция необходима, чтоб получить сразу весь буфер
+                            _client.ReceiveTimeout = 100;
+                            while (true)
+                            {
+                                try
+                                {
+                                    receivedLength = _client.Receive(receivedData);
+                                    buff.AddRange(receivedData.Take(receivedLength).ToArray());
+                                }
+                                catch
+                                {
+                                    if (buff.Count > 0)
+                                        break;
+                                }
+                            }
+                            //receivedLength = _client.Receive(receivedData);
+                            result = Encoding.ASCII.GetString(buff.ToArray(), 0, receivedLength);
 
                             if (result.Contains("OK"))
                             {
                                 Console.WriteLine("Percents: 100 %");
                                 Console.WriteLine();
                             }
+
+                            _client.ReceiveTimeout = 0;
 
                             Console.WriteLine(result);
                             Console.WriteLine();
@@ -256,6 +282,18 @@ namespace Lab1.Client
                         _client.Shutdown(SocketShutdown.Both);
                         _client.Close();
                     }
+                    break;
+                case "DOWNLOAD":
+                    if (_client != null)
+                    {
+                        //
+                    }
+                    else
+                    {
+                        Console.WriteLine("No connection to server or file not found");
+                        Console.WriteLine();
+                    }
+
                     break;
                 default:
                     Console.WriteLine("Command \"{0}\" is unknow", command);

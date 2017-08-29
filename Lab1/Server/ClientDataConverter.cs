@@ -31,8 +31,9 @@ namespace Lab1.Server
                 { ClientCommand.Close, string.Format(@"^CLOSE{0}$", messageEnd) },
                 { ClientCommand.Echo, string.Format(@"^ECHO(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
                 { ClientCommand.BeginUpload, string.Format(@"^UPLOAD(\s'(?<{0}>.*)?'),(\s'(?<{1}>\d+)?'){2}$", _groupParamsCollection[0], _groupParamsCollection[1], messageEnd) },
-                { ClientCommand.ContinueUpload, string.Format(@"^CONTINUE_UPLOAD{0}$", messageEnd) },
-                { ClientCommand.FinishUpload, string.Format(@"^FINISH_UPLOAD{0}$", messageEnd) }
+                { ClientCommand.ContinueUpload, string.Format(@"^CONTINUE_UPLOAD(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
+                { ClientCommand.FinishUpload, string.Format(@"^FINISH_UPLOAD{0}$", messageEnd) },
+                { ClientCommand.Download, string.Format(@"^DOWNLOAD(\s'(?<{0}>.*)?'),(\s?'(?<{1}>\d+)?'){2}$", _groupParamsCollection[0], _groupParamsCollection[1], messageEnd) }
             };
         }
 

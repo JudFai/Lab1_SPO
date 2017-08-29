@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 
@@ -48,9 +49,11 @@ namespace Lab1.Server
             {
                 try
                 {
-                    var buffer = new byte[256];
-                    var lengthRecData = _currentClient.Receive(buffer);
-                    OnDataReceived(new SocketDataEventArgs(_currentClient, buffer.Take(lengthRecData).ToArray()));
+                    var data = ReceiveAllData(_currentClient);
+                    if (data == null)
+                        throw new SocketException();
+
+                    OnDataReceived(new SocketDataEventArgs(_currentClient, data));
                 }
                 catch
                 {
@@ -72,6 +75,41 @@ namespace Lab1.Server
             //}
 
             //Console.WriteLine("RECEIVED DATA FROM <{0}>: {1}", handler.RemoteEndPoint, data.Replace(Environment.NewLine, string.Empty));
+        }
+
+        private byte[] ReceiveAllData(Socket client)
+        {
+            var byteCollection = new List<byte>();
+            client.ReceiveTimeout = 100;
+            var receivedLength = 0;
+            while (true)
+            {
+                try
+                {
+                    var receivedData = new byte[1024];
+                    receivedLength = client.Receive(receivedData);
+                    if (receivedLength == 0)
+                        return null;
+
+                    byteCollection.AddRange(receivedData.Take(receivedLength).ToArray());
+                }
+                catch (SocketException ex)
+                {
+                    if (ex.ErrorCode == 10054)
+                        return null;
+                    else if (byteCollection.Count > 0)
+                    {
+                        break;
+                    }
+                }
+                catch
+                {
+                    if (byteCollection.Count > 0)
+                        break;
+                }
+            }
+
+            return byteCollection.ToArray();
         }
 
         //private void ReceivingFile(Socket handler)

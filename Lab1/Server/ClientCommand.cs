@@ -8,6 +8,7 @@
         Close = 3,
         BeginUpload = 4,
         ContinueUpload = 5,
-        FinishUpload = 6
+        FinishUpload = 6,
+        Download = 7
     }
 }

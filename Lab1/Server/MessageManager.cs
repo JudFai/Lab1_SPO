@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 
 namespace Lab1.Server
@@ -77,7 +79,7 @@ namespace Lab1.Server
                 case ClientCommand.BeginUpload:
                     var pathToFile = clientMessage.CommandParameters[0];
                     var fileSize = clientMessage.CommandParameters[1];
-                    if ((pathToFile != null) && (fileSize != null))
+                    if ((pathToFile != null) && (fileSize != null) && (_currentUploadingFile == null))
                     {
                         IUploadingFile uploadingFile = new UploadingFile(pathToFile.ToString(), client, Convert.ToInt32(fileSize));
                         //data = server.ChangeReceivingModeFile(uploadingFile) 
@@ -85,6 +87,19 @@ namespace Lab1.Server
                         //    : "UPLOADING_WAS_ALREADY";
                         _currentUploadingFile = uploadingFile;
                         data = "OK";
+                    }
+                    else if (_currentUploadingFile != null)
+                    {
+                        IUploadingFile uploadingFile = new UploadingFile(pathToFile.ToString(), client, Convert.ToInt32(fileSize));
+                        if (uploadingFile.Equals(_currentUploadingFile))
+                        {
+                            data = string.Format("OK_{0}", _currentUploadingFile.CurrentBytes.Count);
+                        }
+                        else
+                        {
+                            _currentUploadingFile = uploadingFile;
+                            data = "OK";
+                        }
                     }
                     else
                         data = "ERROR";
@@ -96,7 +111,10 @@ namespace Lab1.Server
                         data = "UPLOAD_NOT_BEGAN";
                     else if (fileData != null)
                     {
-                        var bytes = _dataConverter.GetBytes(clientMessage.CommandParameters[0].ToString());
+                        var bytes = clientMessage
+                            .CommandParameters[0]
+                            .ToString().Split(' ')
+                            .Select(p => byte.Parse(p, NumberStyles.HexNumber));
                         _currentUploadingFile.CurrentBytes.AddRange(bytes);
                         var percents = _currentUploadingFile.GetLoadingPercentage();
                         if (_currentUploadingFile.CurrentBytes.Count <= _currentUploadingFile.Size)
@@ -129,6 +147,25 @@ namespace Lab1.Server
 
                     _currentUploadingFile = null;
 
+                    break;
+                case ClientCommand.Download:
+                    var pathToDownloadingFile = clientMessage.CommandParameters[0];
+                    var index = clientMessage.CommandParameters[1];
+                    if ((pathToDownloadingFile != null) && (index != null))
+                    {
+                        var path = pathToDownloadingFile.ToString();
+                        if (File.Exists(path))
+                        {
+                            var maxBytes = 1024;
+                            var offset = Convert.ToInt32(index.ToString());
+                            var bytes = File.ReadAllBytes(path).Skip(offset).Take(maxBytes);
+                            data = string.Format("OK_{0}", string.Join(" ", bytes.Select(p => p.ToString("X2"))));
+                        }
+                        else
+                            data = "FILE_NOT_FOUND";
+                    }
+                    else
+                        data = "ERROR";
                     break;
                 default:
                     throw new NotImplementedException();
