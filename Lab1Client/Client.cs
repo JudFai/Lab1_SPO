@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Lab1.Client
+namespace Lab1Client
 {
     class Client : IClient
     {
@@ -287,7 +287,112 @@ namespace Lab1.Client
                 case "DOWNLOAD":
                     if (_client != null)
                     {
-                        //
+                        var stepDownload = 1048576;
+                        var receivedTimeout = 50;
+                        var downloadFilePath = match.Groups["param1"];
+                        var pathToContinueDownload = @"Download/continue.txt";
+
+                        var directory = Path.GetDirectoryName(pathToContinueDownload);
+                        if (!Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                            File.WriteAllText(pathToContinueDownload, string.Empty);
+                        }
+
+                        // Путь до файла, который уже когда-то начинался записываться
+                        var pathToContinueFile = string.Empty;
+                        if (File.Exists(pathToContinueDownload))
+                        {
+                            var lines = File.ReadAllLines(pathToContinueDownload);
+                            foreach (var line in lines)
+                            {
+                                if (line.ToLower().Contains(downloadFilePath.Value.ToLower()))
+                                {
+                                    var pathToFile = line.Split('|')[1];
+                                    if (File.Exists(pathToFile))
+                                    {
+                                        pathToContinueFile = pathToFile;
+                                        break;
+                                    }
+                                    //else
+                                    //    File.Delete(pathToContinueDownload);
+                                }
+                            }
+                        }
+
+                        // Если продолжаем скачивание
+                        long currentLength = 0;
+                        if (!string.IsNullOrEmpty(pathToContinueFile))
+                        {
+                            var fiContinueFile = new FileInfo(pathToContinueFile);
+                            currentLength = fiContinueFile.Length;
+                        }
+                        // Иначе
+                        else
+                        {
+                            var ext = Path.GetExtension(downloadFilePath.Value);
+                            pathToContinueFile = string.Format("Download/{0}{1}", DateTime.Now.Ticks, ext);
+                            directory = Path.GetDirectoryName(pathToContinueFile);
+                            if (!Directory.Exists(directory))
+                                Directory.CreateDirectory(directory);
+
+                            //File.Create(pathToContinueFile);
+
+                            //File.Create(pathToContinueDownload);
+                            using (var stream = new StreamWriter(pathToContinueDownload, true))
+                            {
+                                stream.WriteLine(string.Format("{0}|{1}", downloadFilePath.Value, pathToContinueFile));
+                            }
+                            //File.WriteAllText(pathToContinueDownload, );
+                        }
+
+                        while (true)
+                        {
+                            var recBuffer = new List<byte>();
+                            //var byteArr = fileArr.Skip(i).Take(step).ToArray();
+                            var continueUpload = string.Format("DOWNLOAD '{0}','{1}','{2}'{3}",
+                                downloadFilePath.Value,
+                                currentLength,
+                                stepDownload,
+                                Environment.NewLine);
+                            _client.Send(Encoding.ASCII.GetBytes(continueUpload));
+                            // Вся эта конструкция необходима, чтоб получить сразу весь буфер
+                            _client.ReceiveTimeout = receivedTimeout;
+                            var receivedLength = 0;
+                            var receivedData = new byte[stepDownload];
+                            while (true)
+                            {
+                                try
+                                {
+                                    receivedLength = _client.Receive(receivedData);
+                                    recBuffer.AddRange(receivedData.Take(receivedLength).ToArray());
+                                }
+                                catch
+                                {
+                                    if (recBuffer.Count > 0)
+                                        break;
+                                }
+                            }
+
+                            var result = Encoding.ASCII.GetString(recBuffer.ToArray(), 0, recBuffer.Count);
+                            if (result.Contains("OK"))
+                                break;
+
+                            recBuffer = result
+                                .Split(' ')
+                                .Select(p => byte.Parse(p, NumberStyles.HexNumber))
+                                .ToList();
+                            //File.WriteAllBytes(pathToContinueFile, );
+                            var bytes = recBuffer.ToArray();
+                            using (var stream = new FileStream(pathToContinueFile, FileMode.Append))
+                            {
+                                stream.Write(bytes, 0, bytes.Length);
+                            }
+
+                            currentLength += bytes.Length;
+
+                            recBuffer = null;
+                        }
                     }
                     else
                     {

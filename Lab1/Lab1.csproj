@@ -42,8 +42,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\Client.cs" />
-    <Compile Include="Client\IClient.cs" />
     <Compile Include="Server\Client.cs" />
     <Compile Include="Server\ClientCommand.cs" />
     <Compile Include="Server\ClientDataConverter.cs" />

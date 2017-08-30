@@ -151,15 +151,19 @@ namespace Lab1.Server
                 case ClientCommand.Download:
                     var pathToDownloadingFile = clientMessage.CommandParameters[0];
                     var index = clientMessage.CommandParameters[1];
+                    var length = clientMessage.CommandParameters[2];
                     if ((pathToDownloadingFile != null) && (index != null))
                     {
                         var path = pathToDownloadingFile.ToString();
                         if (File.Exists(path))
                         {
-                            var maxBytes = 1024;
                             var offset = Convert.ToInt32(index.ToString());
+                            var maxBytes = Convert.ToInt32(length.ToString());
                             var bytes = File.ReadAllBytes(path).Skip(offset).Take(maxBytes);
-                            data = string.Format("OK_{0}", string.Join(" ", bytes.Select(p => p.ToString("X2"))));
+                            if (bytes.Any())
+                                data = string.Join(" ", bytes.Select(p => p.ToString("X2")));
+                            else
+                                data = "OK";
                         }
                         else
                             data = "FILE_NOT_FOUND";

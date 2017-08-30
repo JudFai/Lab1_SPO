@@ -41,6 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client.cs" />
+    <Compile Include="ClientWorker.cs" />
+    <Compile Include="CommandClient.cs" />
+    <Compile Include="CommandClientConverter.cs" />
+    <Compile Include="IClient.cs" />
+    <Compile Include="IClientWorker.cs" />
+    <Compile Include="ICommandClientConverter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

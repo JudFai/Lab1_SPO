@@ -1,6 +1,6 @@
-﻿namespace Lab1.Client
+﻿namespace Lab1Client
 {
-    interface IClient
+    public interface IClient
     {
         void SendCommand(string cmd);
     }

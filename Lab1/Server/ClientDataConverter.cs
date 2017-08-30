@@ -23,7 +23,7 @@ namespace Lab1.Server
         {
             _groupParamsCollection = new List<string>
             {
-                "param1", "param2"
+                "param1", "param2", "param3"
             };
             _commandPatternDictionary = new Dictionary<ClientCommand, string>
             {
@@ -33,7 +33,11 @@ namespace Lab1.Server
                 { ClientCommand.BeginUpload, string.Format(@"^UPLOAD(\s'(?<{0}>.*)?'),(\s'(?<{1}>\d+)?'){2}$", _groupParamsCollection[0], _groupParamsCollection[1], messageEnd) },
                 { ClientCommand.ContinueUpload, string.Format(@"^CONTINUE_UPLOAD(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
                 { ClientCommand.FinishUpload, string.Format(@"^FINISH_UPLOAD{0}$", messageEnd) },
-                { ClientCommand.Download, string.Format(@"^DOWNLOAD(\s'(?<{0}>.*)?'),(\s?'(?<{1}>\d+)?'){2}$", _groupParamsCollection[0], _groupParamsCollection[1], messageEnd) }
+                // EXAMPLE: DOWNLOAD 'd:\1.txt','0','1000000'
+                // 1) Путь
+                // 2) Байт с которого нужно начать
+                // 3) Количество байт, которое нужно получить
+                { ClientCommand.Download, string.Format(@"^DOWNLOAD(\s'(?<{0}>.*)?'),(\s?'(?<{1}>\d+)?'),(\s?'(?<{2}>\d+)?'){3}$", _groupParamsCollection[0], _groupParamsCollection[1], _groupParamsCollection[2], messageEnd) }
             };
         }
 
