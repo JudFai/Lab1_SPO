@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Lab1Client
 {
-    public interface IClientWorker
+    public interface IClientWorker : IDisposable
     {
         IClient Client { get; }
-        void Send(CommandClient command, params object[] param);
+        object Send(CommandClient command, params object[] param);
     }
 }

@@ -171,6 +171,22 @@ namespace Lab1.Server
                     else
                         data = "ERROR";
                     break;
+                case ClientCommand.FileSize:
+                    var pathToFileForFileSize = clientMessage.CommandParameters[0];
+                    if (pathToFileForFileSize != null)
+                    {
+                        var path = pathToFileForFileSize.ToString();
+                        if (File.Exists(path))
+                        {
+                            var fi = new FileInfo(path);
+                            data = path.Length.ToString();
+                        }
+                        else
+                            data = "FILE_NOT_FOUND";
+                    }
+
+                    data = "ERROR";
+                    break;
                 default:
                     throw new NotImplementedException();
             }

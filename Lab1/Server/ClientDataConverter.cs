@@ -37,7 +37,9 @@ namespace Lab1.Server
                 // 1) Путь
                 // 2) Байт с которого нужно начать
                 // 3) Количество байт, которое нужно получить
-                { ClientCommand.Download, string.Format(@"^DOWNLOAD(\s'(?<{0}>.*)?'),(\s?'(?<{1}>\d+)?'),(\s?'(?<{2}>\d+)?'){3}$", _groupParamsCollection[0], _groupParamsCollection[1], _groupParamsCollection[2], messageEnd) }
+                // Если выходим за пределы, то возвращаем OK
+                { ClientCommand.Download, string.Format(@"^DOWNLOAD(\s'(?<{0}>.*)?'),(\s?'(?<{1}>\d+)?'),(\s?'(?<{2}>\d+)?'){3}$", _groupParamsCollection[0], _groupParamsCollection[1], _groupParamsCollection[2], messageEnd) },
+                { ClientCommand.FileSize, string.Format(@"^FILE_SIZE(\s'(?<{0}>.*)?')?{1}$", _groupParamsCollection[0], messageEnd) },
             };
         }
 

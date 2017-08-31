@@ -9,6 +9,7 @@
         BeginUpload = 4,
         ContinueUpload = 5,
         FinishUpload = 6,
-        Download = 7
+        Download = 7,
+        FileSize = 8
     }
 }

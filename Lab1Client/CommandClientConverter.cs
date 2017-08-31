@@ -17,7 +17,7 @@ namespace Lab1Client
             switch (commandClient)
             {
                 case CommandClient.Connect:
-                    var ip = (IPAddress)param[0];
+                    var ip = (IPEndPoint)param[0];
                     command = string.Format("{0} '{1}'", command, ip);
                     break;
                 case CommandClient.Upload:

@@ -54,7 +54,26 @@ namespace Lab1Client
 
         #region IClient Members
 
-        public void SendCommand(string cmd)
+        public event EventHandler<MessageEventArgs> MessageReceived;
+        private void OnMessageReceived(string msg)
+        {
+            if (MessageReceived != null)
+                MessageReceived(this, new MessageEventArgs(DateTime.Now, msg));
+        }
+
+        public event EventHandler<ProgressEventArgs> ProgressChanged;
+        private void OnProgressChanged(int progress)
+        {
+            if ((ProgressChanged != null) && (CurrentProgress != progress))
+            {
+                CurrentProgress = progress;
+                ProgressChanged(this, new ProgressEventArgs(progress));
+            }
+        }
+
+        public int CurrentProgress { get; private set; }
+
+        public object SendCommand(string cmd)
         {
             var match = GetMatchByPatterns(cmd);
 
@@ -84,16 +103,20 @@ namespace Lab1Client
                             _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                             try
                             {
-                                Console.WriteLine("Connecting to '{0}:{1}'", addressStr, portStr);
+                                OnMessageReceived(string.Format("Connecting to '{0}:{1}'", addressStr, portStr));
+                                //Console.WriteLine("Connecting to '{0}:{1}'", addressStr, portStr);
                                 _client.Connect(ip, port);
-                                Console.WriteLine("Connected to '{0}:{1}'", addressStr, portStr);
-                                Console.WriteLine();
+                                //Console.WriteLine("Connected to '{0}:{1}'", addressStr, portStr);
+                                //Console.WriteLine();
+                                OnMessageReceived(string.Format("Connected to '{0}:{1}'", addressStr, portStr));
+                                return true;
                             }
                             catch
                             {
                                 _client = null;
-                                Console.WriteLine("Connecting to '{0}:{1}' was failed", addressStr, portStr);
-                                Console.WriteLine();
+                                //Console.WriteLine("Connecting to '{0}:{1}' was failed", addressStr, portStr);
+                                //Console.WriteLine();
+                                OnMessageReceived(string.Format("Connecting to '{0}:{1}' was failed", addressStr, portStr));
                             }
                             //var fileName = @"d:\ttt.txt";
                             //client.SendFile(fileName);
@@ -101,15 +124,19 @@ namespace Lab1Client
                             //client.Close();
                         }
                         else
-                            Console.WriteLine("Address or port not valid");
+                        {
+                            //Console.WriteLine("Address or port not valid");
+                            OnMessageReceived(string.Format("Address or port not valid"));
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Command without parameters");
-                        Console.WriteLine();
+                        //Console.WriteLine("Command without parameters");
+                        //Console.WriteLine();
+                        OnMessageReceived(string.Format("Command without parameters"));
                     }
 
-                    break;
+                    return false;
                 case "UPLOAD":
                     var fileNameGroup = match.Groups["param1"];
                     if (fileNameGroup.Success && (_client != null) && File.Exists(fileNameGroup.Value))
@@ -162,13 +189,15 @@ namespace Lab1Client
                                     if (percents > 100)
                                         percents = 100;
 
-                                    Console.WriteLine("Percents: {0} %", percents);
+                                    //Console.WriteLine("Percents: {0} %", percents);
+                                    OnProgressChanged(percents);
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Error uploading file");
-                                    Console.WriteLine();
-                                    return;
+                                    //Console.WriteLine("Error uploading file");
+                                    //Console.WriteLine();
+                                    OnMessageReceived(string.Format("Error uploading file"));
+                                    return null;
                                 }
 
                             }
@@ -198,26 +227,30 @@ namespace Lab1Client
 
                             if (result.Contains("OK"))
                             {
-                                Console.WriteLine("Percents: 100 %");
-                                Console.WriteLine();
+                                //Console.WriteLine("Percents: 100 %");
+                                //Console.WriteLine();
+                                OnProgressChanged(100);
                             }
 
                             _client.ReceiveTimeout = 0;
 
-                            Console.WriteLine(result);
-                            Console.WriteLine();
+                            //Console.WriteLine(result);
+                            //Console.WriteLine();
+                            OnMessageReceived(result);
                         }
                         else
                         {
-                            Console.WriteLine(result);
-                            Console.WriteLine();
+                            //Console.WriteLine(result);
+                            //Console.WriteLine();
+                            OnMessageReceived(result);
                         }
                         //_client.SendFile(fileNameGroup.Value);
                     }
                     else
                     {
-                        Console.WriteLine("No connection to server or file not found");
-                        Console.WriteLine();
+                        //Console.WriteLine("No connection to server or file not found");
+                        //Console.WriteLine();
+                        OnMessageReceived("No connection to server or file not found");
                     }
 
                     break;
@@ -230,13 +263,16 @@ namespace Lab1Client
                         var receivedLength = _client.Receive(receivedData);
                         var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
                         Console.WriteLine(result);
+                        return result;
                     }
                     else
                     {
-                        Console.WriteLine("No connection to server or file not found");
-                        Console.WriteLine();
+                        //Console.WriteLine("No connection to server or file not found");
+                        //Console.WriteLine();
+                        OnMessageReceived("No connection to server or file not found");
                     }
 
+                    return null;
                     break;
                 case "ECHO":
                     if (_client != null)
@@ -247,6 +283,7 @@ namespace Lab1Client
                         var receivedLength = _client.Receive(receivedData);
                         var result = Encoding.ASCII.GetString(receivedData, 0, receivedLength);
                         Console.WriteLine(result);
+                        return result;
                     }
                     else
                     {
@@ -254,7 +291,7 @@ namespace Lab1Client
                         Console.WriteLine();
                     }
 
-                    break;
+                    return null;
                 case "CLOSE":
                     if (_client != null)
                     {
@@ -266,17 +303,20 @@ namespace Lab1Client
                         {
                             _client.Dispose();
                             _client = null;
-                            Console.WriteLine("Socket close by Server");
-                            Console.WriteLine();
+                            //Console.WriteLine("Socket close by Server");
+                            //Console.WriteLine();
+                            OnMessageReceived("Socket close by Server");
+                            return true;
                         }
                     }
                     else
                     {
-                        Console.WriteLine("No connection to server or file not found");
-                        Console.WriteLine();
+                        //Console.WriteLine("No connection to server or file not found");
+                        //Console.WriteLine();
+                        OnMessageReceived("No connection to server or file not found");
                     }
 
-                    break;
+                    return false;
                 case "QUIT":
                     if (_client != null)
                     {
@@ -287,126 +327,178 @@ namespace Lab1Client
                 case "DOWNLOAD":
                     if (_client != null)
                     {
+                        var recBuffer = new List<byte>();
                         var stepDownload = 1048576;
                         var receivedTimeout = 50;
                         var downloadFilePath = match.Groups["param1"];
                         var pathToContinueDownload = @"Download/continue.txt";
 
-                        var directory = Path.GetDirectoryName(pathToContinueDownload);
-                        if (!Directory.Exists(directory))
-                        {
-                            Directory.CreateDirectory(directory);
-                            File.WriteAllText(pathToContinueDownload, string.Empty);
-                        }
-
-                        // Путь до файла, который уже когда-то начинался записываться
-                        var pathToContinueFile = string.Empty;
-                        if (File.Exists(pathToContinueDownload))
-                        {
-                            var lines = File.ReadAllLines(pathToContinueDownload);
-                            foreach (var line in lines)
-                            {
-                                if (line.ToLower().Contains(downloadFilePath.Value.ToLower()))
-                                {
-                                    var pathToFile = line.Split('|')[1];
-                                    if (File.Exists(pathToFile))
-                                    {
-                                        pathToContinueFile = pathToFile;
-                                        break;
-                                    }
-                                    //else
-                                    //    File.Delete(pathToContinueDownload);
-                                }
-                            }
-                        }
-
-                        // Если продолжаем скачивание
-                        long currentLength = 0;
-                        if (!string.IsNullOrEmpty(pathToContinueFile))
-                        {
-                            var fiContinueFile = new FileInfo(pathToContinueFile);
-                            currentLength = fiContinueFile.Length;
-                        }
-                        // Иначе
-                        else
-                        {
-                            var ext = Path.GetExtension(downloadFilePath.Value);
-                            pathToContinueFile = string.Format("Download/{0}{1}", DateTime.Now.Ticks, ext);
-                            directory = Path.GetDirectoryName(pathToContinueFile);
-                            if (!Directory.Exists(directory))
-                                Directory.CreateDirectory(directory);
-
-                            //File.Create(pathToContinueFile);
-
-                            //File.Create(pathToContinueDownload);
-                            using (var stream = new StreamWriter(pathToContinueDownload, true))
-                            {
-                                stream.WriteLine(string.Format("{0}|{1}", downloadFilePath.Value, pathToContinueFile));
-                            }
-                            //File.WriteAllText(pathToContinueDownload, );
-                        }
-
+                        long fileDownloadedFile = 0;
+                        var cmdFileDownloadedFile = string.Format("FILE_SIZE '{0}'{1}",
+                        downloadFilePath.Value,
+                        Environment.NewLine);
+                        _client.Send(Encoding.ASCII.GetBytes(cmdFileDownloadedFile));
+                        // Вся эта конструкция необходима, чтоб получить сразу весь буфер
+                        _client.ReceiveTimeout = receivedTimeout;
+                        var receivedLength1 = 0;
+                        var receivedData1 = new byte[stepDownload];
                         while (true)
                         {
-                            var recBuffer = new List<byte>();
-                            //var byteArr = fileArr.Skip(i).Take(step).ToArray();
-                            var continueUpload = string.Format("DOWNLOAD '{0}','{1}','{2}'{3}",
-                                downloadFilePath.Value,
-                                currentLength,
-                                stepDownload,
-                                Environment.NewLine);
-                            _client.Send(Encoding.ASCII.GetBytes(continueUpload));
-                            // Вся эта конструкция необходима, чтоб получить сразу весь буфер
-                            _client.ReceiveTimeout = receivedTimeout;
-                            var receivedLength = 0;
-                            var receivedData = new byte[stepDownload];
+                            try
+                            {
+                                receivedLength1 = _client.Receive(receivedData1);
+                                recBuffer.AddRange(receivedData1.Take(receivedLength1).ToArray());
+                            }
+                            catch
+                            {
+                                if (recBuffer.Count > 0)
+                                    break;
+                            }
+                        }
+
+                        var result = Encoding.ASCII.GetString(recBuffer.ToArray(), 0, recBuffer.Count);
+                        if (result.Contains("OK"))
+                        {
+                            fileDownloadedFile = long.Parse(result.Split('_')[1]);
+                            var directory = Path.GetDirectoryName(pathToContinueDownload);
+                            if (!Directory.Exists(directory))
+                            {
+                                Directory.CreateDirectory(directory);
+                                File.WriteAllText(pathToContinueDownload, string.Empty);
+                            }
+
+                            // Путь до файла, который уже когда-то начинался записываться
+                            var pathToContinueFile = string.Empty;
+                            if (File.Exists(pathToContinueDownload))
+                            {
+                                var lines = File.ReadAllLines(pathToContinueDownload);
+                                foreach (var line in lines)
+                                {
+                                    if (line.ToLower().Contains(downloadFilePath.Value.ToLower()))
+                                    {
+                                        var pathToFile = line.Split('|')[1];
+                                        if (File.Exists(pathToFile))
+                                        {
+                                            pathToContinueFile = pathToFile;
+                                            break;
+                                        }
+                                        //else
+                                        //    File.Delete(pathToContinueDownload);
+                                    }
+                                }
+                            }
+
+                            // Если продолжаем скачивание
+                            long currentLength = 0;
+                            if (!string.IsNullOrEmpty(pathToContinueFile))
+                            {
+                                var fiContinueFile = new FileInfo(pathToContinueFile);
+                                currentLength = fiContinueFile.Length;
+                            }
+                            // Иначе
+                            else
+                            {
+                                var ext = Path.GetExtension(downloadFilePath.Value);
+                                pathToContinueFile = string.Format("Download/{0}{1}", DateTime.Now.Ticks, ext);
+                                directory = Path.GetDirectoryName(pathToContinueFile);
+                                if (!Directory.Exists(directory))
+                                    Directory.CreateDirectory(directory);
+
+                                //File.Create(pathToContinueFile);
+
+                                //File.Create(pathToContinueDownload);
+                                using (var stream = new StreamWriter(pathToContinueDownload, true))
+                                {
+                                    stream.WriteLine(string.Format("{0}|{1}", downloadFilePath.Value, pathToContinueFile));
+                                }
+                                //File.WriteAllText(pathToContinueDownload, );
+                            }
+
                             while (true)
                             {
-                                try
+                                recBuffer = new List<byte>();
+                                //var byteArr = fileArr.Skip(i).Take(step).ToArray();
+                                var continueUpload = string.Format("DOWNLOAD '{0}','{1}','{2}'{3}",
+                                    downloadFilePath.Value,
+                                    currentLength,
+                                    stepDownload,
+                                    Environment.NewLine);
+                                _client.Send(Encoding.ASCII.GetBytes(continueUpload));
+                                // Вся эта конструкция необходима, чтоб получить сразу весь буфер
+                                _client.ReceiveTimeout = receivedTimeout;
+                                var receivedLength = 0;
+                                var receivedData = new byte[stepDownload];
+                                while (true)
                                 {
-                                    receivedLength = _client.Receive(receivedData);
-                                    recBuffer.AddRange(receivedData.Take(receivedLength).ToArray());
+                                    try
+                                    {
+                                        receivedLength = _client.Receive(receivedData);
+                                        recBuffer.AddRange(receivedData.Take(receivedLength).ToArray());
+                                    }
+                                    catch
+                                    {
+                                        if (recBuffer.Count > 0)
+                                            break;
+                                    }
                                 }
-                                catch
+
+                                result = Encoding.ASCII.GetString(recBuffer.ToArray(), 0, recBuffer.Count);
+                                if (result.Contains("OK"))
+                                    break;
+
+                                recBuffer = result
+                                    .Split(' ')
+                                    .Select(p => byte.Parse(p, NumberStyles.HexNumber))
+                                    .ToList();
+                                //File.WriteAllBytes(pathToContinueFile, );
+                                var bytes = recBuffer.ToArray();
+                                using (var stream = new FileStream(pathToContinueFile, FileMode.Append))
                                 {
-                                    if (recBuffer.Count > 0)
-                                        break;
+                                    stream.Write(bytes, 0, bytes.Length);
                                 }
+
+                                currentLength += bytes.Length;
+                                var progress = Convert.ToInt32(Math.Round((currentLength / (double)fileDownloadedFile) * 100));
+                                OnProgressChanged(progress);
+                                Console.WriteLine(progress);
+
+                                //recBuffer = null;
                             }
+                        }
+                        else
+                        {
+                            //Console.WriteLine("No connection to server or file not found");
+                            OnMessageReceived("No connection to server or file not found");
 
-                            var result = Encoding.ASCII.GetString(recBuffer.ToArray(), 0, recBuffer.Count);
-                            if (result.Contains("OK"))
-                                break;
-
-                            recBuffer = result
-                                .Split(' ')
-                                .Select(p => byte.Parse(p, NumberStyles.HexNumber))
-                                .ToList();
-                            //File.WriteAllBytes(pathToContinueFile, );
-                            var bytes = recBuffer.ToArray();
-                            using (var stream = new FileStream(pathToContinueFile, FileMode.Append))
-                            {
-                                stream.Write(bytes, 0, bytes.Length);
-                            }
-
-                            currentLength += bytes.Length;
-
-                            recBuffer = null;
                         }
                     }
                     else
                     {
-                        Console.WriteLine("No connection to server or file not found");
-                        Console.WriteLine();
+                        //Console.WriteLine("No connection to server or file not found");
+                        //Console.WriteLine();
+                        OnMessageReceived("No connection to server or file not found");
                     }
 
                     break;
                 default:
                     Console.WriteLine("Command \"{0}\" is unknow", command);
-                    break;
+                    return null;
             }
+
+            return null;
         }
 
         #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            MessageReceived = null;
+            ProgressChanged = null;
+        }
+
+        #endregion
+
     }
 }
