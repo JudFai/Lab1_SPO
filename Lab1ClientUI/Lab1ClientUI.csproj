@@ -83,8 +83,10 @@
     <Compile Include="Converters\InvertBoolConverter.cs" />
     <Compile Include="Converters\LogMessageCollectionToStringConverter.cs" />
     <Compile Include="Converters\StringToIPEndPointConverter.cs" />
+    <Compile Include="ISocketErrorHandler.cs" />
     <Compile Include="Model\LogMessage.cs" />
     <Compile Include="Model\LogMessageCollection.cs" />
+    <Compile Include="SocketErrorHandler.cs" />
     <Compile Include="ViewModel\HostViewModel.cs" />
     <Compile Include="View\HostView.xaml.cs">
       <DependentUpon>HostView.xaml</DependentUpon>

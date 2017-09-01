@@ -17,6 +17,8 @@ namespace Lab1ClientUI.ViewModel
     {
         #region Fields
 
+        private ISocketErrorHandler _errorHandler = new SocketErrorHandler();
+
         private CommandClient _selectedCommandClient;
         private DateTime? _serverTime;
         private IPEndPoint _serverIPEndPoint;
@@ -33,6 +35,8 @@ namespace Lab1ClientUI.ViewModel
         private string _pathToUploadFile;
         private RelayCommand _uploadPathCommand;
         private int _progress;
+        private bool _isWorkingWithFile;
+        private string _pathToDownloadFile;
 
         #endregion
 
@@ -150,6 +154,26 @@ namespace Lab1ClientUI.ViewModel
             }
         }
 
+        public bool IsWorkingWithFile
+        {
+            get { return _isWorkingWithFile; }
+            set
+            {
+                _isWorkingWithFile = value;
+                RaisePropertyChanged(() => IsWorkingWithFile);
+            }
+        }
+
+        public string PathToDownloadFile
+        {
+            get { return _pathToDownloadFile; }
+            set
+            {
+                _pathToDownloadFile = value;
+                RaisePropertyChanged(() => PathToDownloadFile);
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -197,11 +221,12 @@ namespace Lab1ClientUI.ViewModel
         public HostViewModel()
         {
             DispatcherHelper.Initialize();
+            _errorHandler.SocketWasAborded += OnSocketWasAborded;
             _serverIPEndPoint = new IPEndPoint(IPAddress.Parse("192.168.13.205"), 10001);
             _logMessageCollection = new LogMessageCollection();
             CommandClientCollection = new List<CommandClient>
             {
-                CommandClient.Donwload,
+                CommandClient.Download,
                 CommandClient.Echo,
                 CommandClient.Time,
                 CommandClient.Upload
@@ -241,7 +266,7 @@ namespace Lab1ClientUI.ViewModel
 
         private void Send()
         {
-            Task.Factory.StartNew(() =>
+            Task.Factory.StartNew(() => _errorHandler.Handle(() =>
             {
                 switch (SelectedCommandClient)
                 {
@@ -252,10 +277,17 @@ namespace Lab1ClientUI.ViewModel
                         ReceivedServerMessage = (string)ClientWorker.Send(SelectedCommandClient, SendServerMessage);
                         break;
                     case CommandClient.Upload:
+                        IsWorkingWithFile = true;
                         ClientWorker.Send(SelectedCommandClient, PathToUploadFile);
+                        IsWorkingWithFile = false;
+                        break;
+                    case CommandClient.Download:
+                        IsWorkingWithFile = true;
+                        ClientWorker.Send(SelectedCommandClient, PathToDownloadFile);
+                        IsWorkingWithFile = false;
                         break;
                 }
-            });
+            }));
         }
 
         private void UploadPath()
@@ -283,6 +315,14 @@ namespace Lab1ClientUI.ViewModel
         private void OnProgressChanged(object sender, ProgressEventArgs e)
         {
             Progress = e.Progress;
+        }
+
+        private void OnSocketWasAborded(object sender, EventArgs eventArgs)
+        {
+            OnMessageReceived(this, new MessageEventArgs(DateTime.Now, "Connection was lost"));
+            IsWorkingWithFile = false;
+            Connected = false;
+            SelectedCommandClient = CommandClient.None;
         }
 
         #endregion

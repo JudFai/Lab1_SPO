@@ -51,7 +51,10 @@ namespace Lab1.Server
         public void SendMessage(IMessage message)
         {
             var bytes = _dataConverter.GetBytes(message.Data);
-            Console.WriteLine("SEND DATA TO <{0}>: {1}", Handler.RemoteEndPoint, message.Data.Replace(Environment.NewLine, string.Empty));
+            Console.WriteLine("SEND DATA TO <{0}>: {1}", 
+                Handler.RemoteEndPoint, message.Data.Length < 1000 
+                ? message.Data.Replace(Environment.NewLine, string.Empty)
+                : string.Format("{0} Lengths ", message.Data.Length));
             Console.WriteLine();
             var length = Handler.Send(bytes);
             OnSentMessage();

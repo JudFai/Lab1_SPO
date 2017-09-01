@@ -22,7 +22,7 @@ namespace Lab1Client
                     break;
                 case CommandClient.Upload:
                 case CommandClient.Echo:
-                case CommandClient.Donwload:
+                case CommandClient.Download:
                     var str = (string)param[0];
                     command = string.Format("{0} '{1}'", command, str);
                     break;

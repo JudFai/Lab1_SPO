@@ -334,9 +334,10 @@ namespace Lab1Client
                         var pathToContinueDownload = @"Download/continue.txt";
 
                         long fileDownloadedFile = 0;
-                        var cmdFileDownloadedFile = string.Format("FILE_SIZE '{0}'{1}",
-                        downloadFilePath.Value,
-                        Environment.NewLine);
+                        var cmdFileDownloadedFile = string.Format(
+                            "FILE_SIZE '{0}'{1}",
+                            downloadFilePath.Value,
+                            Environment.NewLine);
                         _client.Send(Encoding.ASCII.GetBytes(cmdFileDownloadedFile));
                         // Вся эта конструкция необходима, чтоб получить сразу весь буфер
                         _client.ReceiveTimeout = receivedTimeout;
@@ -464,6 +465,8 @@ namespace Lab1Client
 
                                 //recBuffer = null;
                             }
+
+                            OnMessageReceived(string.Format("File was downloaded. Path '{0}'", pathToContinueFile));
                         }
                         else
                         {

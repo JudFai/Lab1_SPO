@@ -179,13 +179,16 @@ namespace Lab1.Server
                         if (File.Exists(path))
                         {
                             var fi = new FileInfo(path);
-                            data = path.Length.ToString();
+                            data = string.Format("OK_{0}", fi.Length);
                         }
                         else
                             data = "FILE_NOT_FOUND";
                     }
+                    else
+                    {
+                        data = "ERROR";
+                    }
 
-                    data = "ERROR";
                     break;
                 default:
                     throw new NotImplementedException();

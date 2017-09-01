@@ -9,6 +9,6 @@
         Echo = 4,
         Close = 5,
         Quit = 6,
-        Donwload = 7
+        Download = 7
     }
 }

@@ -63,9 +63,11 @@ namespace Lab1.Server
             if (foundClient != null)
                 client = foundClient;
             else
+            {
+                ConnectedClients.Add(client);
                 client.SentMessage += OnSentMessage;
+            }
 
-            ConnectedClients.Add(client);
             return client;
         }
 

@@ -92,10 +92,27 @@
                     <Button Content="..."
                             Command="{Binding UploadPathCommand}"/>
                 </StackPanel>
-                <StackPanel>
+                <StackPanel Visibility="{Binding IsWorkingWithFile, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="{Binding Progress, StringFormat={}Progress {0}%}" />
                     <ProgressBar Value="{Binding Progress}"
                                  Minimum="0" Maximum="100"
+                                 HorizontalAlignment="Left"
+                                 Height="25"
+                                 Width="200" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="DownloadCommand"
+                        Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Path to download file" />
+                    <TextBox Text="{Binding PathToDownloadFile}" />
+                </StackPanel>
+                <StackPanel Visibility="{Binding IsWorkingWithFile, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="{Binding Progress, StringFormat={}Progress {0}%}" />
+                    <ProgressBar Value="{Binding Progress}"
+                                 Minimum="0" Maximum="100"
+                                 HorizontalAlignment="Left"
+                                 Height="25"
                                  Width="200" />
                 </StackPanel>
             </StackPanel>
@@ -110,6 +127,9 @@
                                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}" />
                             </ObjectAnimationUsingKeyFrames>
                             <ObjectAnimationUsingKeyFrames Storyboard.TargetName="UploadCommand" Storyboard.TargetProperty="(UIElement.Visibility)">
+                                <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}" />
+                            </ObjectAnimationUsingKeyFrames>
+                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DownloadCommand" Storyboard.TargetProperty="(UIElement.Visibility)">
                                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}" />
                             </ObjectAnimationUsingKeyFrames>
                         </Storyboard>
@@ -131,6 +151,13 @@
                     <VisualState Name="Upload">
                         <Storyboard>
                             <ObjectAnimationUsingKeyFrames Storyboard.TargetName="UploadCommand" Storyboard.TargetProperty="(UIElement.Visibility)">
+                                <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
+                            </ObjectAnimationUsingKeyFrames>
+                        </Storyboard>
+                    </VisualState>
+                    <VisualState Name="Download">
+                        <Storyboard>
+                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DownloadCommand" Storyboard.TargetProperty="(UIElement.Visibility)">
                                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
                             </ObjectAnimationUsingKeyFrames>
                         </Storyboard>
